@@ -1,111 +1,129 @@
-#include <iostream>
-#include <sstream>
-#include <bitset>
-#include <vector>
-#include <cmath>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include<iostream>
 
 using namespace std;
 
-class IPAddress {
-private:
-    string ip;
-    int subnetMask;
-    string binaryIP;
-    vector<int> octets;
-    char ipClass;
+string xorfun( string encoded , string crc)							
+{
+	int crclen = crc.length();
+	
+	for ( int i = 0 ; i <= (encoded.length() - crclen) ; )			
+	{																
+		for( int j=0 ; j < crclen ; j++)								
+		{
+			encoded[i+j] = encoded[i+j] == crc[j] ? '0' : '1' ;			
+		}
+	for( ; i< encoded.length() && encoded[i] != '1' ; i++) ;
+	
+	}
+	
+	return encoded;
+}
 
-public:
-    IPAddress(string ip, int subnetMask) : ip(ip), subnetMask(subnetMask) {
-        parseIP();
-        calculateClass();
-    }
+int main()
+{
+	string data , crc , encoded = "";
+	cout<<endl<<"-----------Sender Side --------------"<<endl;
+	cout<<"Enter Data bits: "<<endl;								
+	cin>>data;														
+	
+	cout<<"Enter Generator: "<<endl;
+	cin>>crc;														
+	
+	encoded += data;												
+	
+	int datalen = data.length();
+	int crclen = crc.length();
+	
+	for(int i=1 ; i <= (crclen - 1) ; i++)
+		encoded += '0';												
+	
+	encoded = xorfun(encoded , crc);								
+	
+	cout<<"Checksum generated is: ";
+	cout<<encoded.substr(encoded.length() - crclen + 1)<<endl<<endl;					
+	cout<<"Message to be Transmitted over network: ";
+	cout<<data + encoded.substr(encoded.length() - crclen + 1);    					
+	
+	
+	
+	
+	cout<<endl<<"---------------Reciever Side-----------------"<<endl;
 
-    void parseIP() {
-        stringstream ss(ip);
-        string octet;
-        while (getline(ss, octet, '.')) {
-            octets.push_back(stoi(octet));
-            binaryIP += bitset<8>(stoi(octet)).to_string();
-        }
-    }
 
-    void calculateClass() {
-        if (octets[0] >= 0 && octets[0] <= 127)
-            ipClass = 'A';
-        else if (octets[0] >= 128 && octets[0] <= 191)
-            ipClass = 'B';
-        else if (octets[0] >= 192 && octets[0] <= 223)
-            ipClass = 'C';
-        else if (octets[0] >= 224 && octets[0] <= 239)
-            ipClass = 'D';
-        else if (octets[0] >= 240 && octets[0] <= 255)
-            ipClass = 'E';
-    }
 
-    void calculateNetworkAddress() {
-        string networkAddress = binaryIP;
-        for (int i = subnetMask; i < 32; ++i) {
-            networkAddress[i] = '0';
-        }
-        cout << "Network Address: " << binaryToDecimal(networkAddress) << endl;
-    }
-
-    void calculateBroadcastAddress() {
-        string broadcastAddress = binaryIP;
-        for (int i = subnetMask; i < 32; ++i) {
-            broadcastAddress[i] = '1';
-        }
-        cout << "Broadcast Address: " << binaryToDecimal(broadcastAddress) << endl;
-    }
-
-    void calculateFirstLastIPAddress() {
-        string firstIPAddress = binaryIP;
-        string lastIPAddress = binaryIP;
-        for (int i = subnetMask; i < 32; ++i) {
-            if (i < 31) {
-                firstIPAddress[i] = '0';
-                lastIPAddress[i] = '1';
-            } else {
-                lastIPAddress[i] = '0';
-            }
-        }
-        cout << "First IP Address: " << binaryToDecimal(firstIPAddress) << endl;
-        cout << "Last IP Address: " << binaryToDecimal(lastIPAddress) << endl;
-    }
-
-    int binaryToDecimal(string binary) {
-        int decimal = 0;
-        int power = 0;
-        for (int i = binary.length() - 1; i >= 0; --i) {
-            if (binary[i] == '1') {
-                decimal += pow(2, power);
-            }
-            ++power;
-        }
-        return decimal;
-    }
-
-    void printInfo() {
-        cout << "IP Address: " << ip << endl;
-        cout << "Subnet Mask: " << subnetMask << endl;
-        cout << "Class: " << ipClass << endl;
-        calculateNetworkAddress();
-        calculateBroadcastAddress();
-        calculateFirstLastIPAddress();
-    }
-};
-
-int main() {
-    string ip;
-    int subnetMask;
-
-    cout << "Enter IP Address: ";
-    cin >> ip;
-    cout << "Enter Subnet Mask: ";
-    cin >> subnetMask;
-
-    IPAddress ipAddress(ip, subnetMask);
-    ipAddress.printInfo();
-
-    return 0;
+	cout<<"Enter the message recieved: "<<endl;
+	string msg;																
+	cin>>msg;
+	
+	msg = xorfun( msg , crc);												
+	
+	for( char i : msg.substr(msg.length() - crclen + 1))					
+		if( i != '0' )
+			{	
+				cout<<"Error in communication "<<endl;						
+				return 0;
+			}
+	
+	cout<<"No Error !"<<endl;												
+	return 0;
 }
